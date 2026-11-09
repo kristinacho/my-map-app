@@ -68,7 +68,9 @@ export default function Map({ markers, onAddMarker, onMarkerPress }: MapProps) {
               longitude: marker.longitude,
             }}
             title={`Маркер ${marker.id}`}
-            onPress={() => onMarkerPress(marker)}
+            onPress={() => {
+              onMarkerPress(marker);
+            }}
           />
         ))}
       </MapView>

@@ -2,12 +2,12 @@ import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import ImageList from "../../components/imageList";
 import { useMarkers } from "../../context/markersContext";
@@ -15,8 +15,12 @@ import { useMarkers } from "../../context/markersContext";
 export default function MarkerDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getMarkerById, addImageToMarker, removeImageFromMarker } =
-    useMarkers();
+  const {
+    getMarkerById,
+    addImageToMarker,
+    removeImageFromMarker,
+    deleteMarker,
+  } = useMarkers();
   const [isPickingImage, setIsPickingImage] = useState(false);
 
   const marker = typeof id === "string" ? getMarkerById(id) : undefined;
@@ -27,6 +31,34 @@ export default function MarkerDetailsScreen() {
     } else {
       router.replace("/");
     }
+  };
+
+  const handleDeleteMarker = () => {
+    if (typeof id !== "string") {
+      Alert.alert("Ошибка", "Не удалось определить маркер.");
+      return;
+    }
+
+    Alert.alert(
+      "Удалить маркер?",
+      "Маркер и все привязанные фотографии будут удалены.",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Удалить",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteMarker(id);
+              router.replace("/");
+            } catch (error) {
+              console.error("Ошибка удаления маркера", error);
+              Alert.alert("Ошибка", "Не удалось удалить маркер.");
+            }
+          },
+        },
+      ],
+    );
   };
 
   const pickImage = async () => {
@@ -49,7 +81,7 @@ export default function MarkerDetailsScreen() {
         return;
       }
 
-      addImageToMarker(marker.id, uri);
+      await addImageToMarker(marker.id, uri);
     } catch (error) {
       console.error("Ошибка выбора изображения:", error);
       Alert.alert(
@@ -99,6 +131,14 @@ export default function MarkerDetailsScreen() {
         </Text>
       </Pressable>
 
+      <Pressable
+        style={styles.deleteButton}
+        onPress={handleDeleteMarker}
+        accessibilityRole="button"
+      >
+        <Text style={styles.deleteButtonText}>Удалить маркер</Text>
+      </Pressable>
+
       <Pressable style={styles.backButton} onPress={goBack}>
         <Text style={styles.backText}>Вернуться на карту</Text>
       </Pressable>
@@ -122,4 +162,16 @@ const styles = StyleSheet.create({
   buttonText: { color: "#fff", fontWeight: "600" },
   backButton: { padding: 14, alignItems: "center", marginTop: 8 },
   backText: { color: "#2563eb", fontWeight: "600" },
+  deleteButton: {
+    backgroundColor: "#b91c1c",
+    padding: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    textAlign: "center",
+  },
 });
